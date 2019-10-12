@@ -28,14 +28,14 @@
 # error "Invalid data width"
 #endif
 
-class	i_send : virtual public sc_interface
+class	IIntrSend : virtual public sc_interface
 {
 	public:
 
 	virtual	void	send(void) = 0;
 };
 
-class	i_receive : virtual public sc_interface
+class	IIntrRecv : virtual public sc_interface
 {
 	public:
 
@@ -169,7 +169,7 @@ class	SlaveHardwareBus : public ISlaveHardwareBusProtocol, public sc_channel
 
 /* -----  Physical layer, interrupt handling ----- */
 
-class	MasterHardwareSyncDetect : public i_receive, public sc_channel 
+class	MasterHardwareSyncDetect : public IIntrRecv, public sc_channel 
 {
 	public:
 
@@ -183,7 +183,7 @@ class	MasterHardwareSyncDetect : public i_receive, public sc_channel
 	}
 };
 
-class	SlaveHardwareSyncGenerate : public i_send, public sc_channel
+class	SlaveHardwareSyncGenerate : public IIntrSend, public sc_channel
 {
 	public:
 
