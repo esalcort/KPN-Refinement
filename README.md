@@ -3,7 +3,7 @@ A Kahn process base class along with an operating system API and a pin-accurate 
 
 # Content
 * **HWBus.h**: A pin-accurate bus model.
-* **coop_os_api.h**: Interface for a cooperative operating system
+* **os_api.h**: Interface for operating system models
 * **kahn_process.h**: Base class for implementing refined Kahn processes
 
 

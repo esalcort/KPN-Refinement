@@ -1,8 +1,8 @@
-#ifndef	COOPERATIVE_OS_API
-#define	COOPERATIVE_OS_API
+#ifndef	OS_API
+#define	OS_API
 
 /*
- *	coop_os_api.h -- A minimal API for cooperative operating systems
+ *	os_api.h -- A minimal API for operating system model in SystemC
  *
  *	System-Level Architecture and Modeling Lab
  *	Department of Electrical and Computer Engineering
@@ -13,12 +13,11 @@
 
 #include <systemc.h>
 
-class   coop_os_api : virtual public sc_interface
+class   os_api : virtual public sc_interface
 {
 	public:
 
 	virtual int	pre_wait() = 0;
-	virtual void	yield() = 0;
 	virtual void	post_wait(int) = 0;
 	virtual void	time_wait(int) = 0; // time in ms
 	virtual void	task_terminate() = 0;
