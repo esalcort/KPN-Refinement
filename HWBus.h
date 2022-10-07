@@ -77,32 +77,32 @@ class	MasterHardwareBus : public IMasterHardwareBusProtocol, public sc_channel
 
 	void	masterWrite(const sc_bv<ADDR_WIDTH>& a, const sc_bv<DATA_WIDTH>& d)
 	{
-		t1:	A.write(a);
-			D.write(d);
-			wait(5000,SC_PS);
+		A.write(a);
+		D.write(d);
+		wait(5000,SC_PS);
 
-		t2:	ready.write(1);
-			while(!ack.read()) wait(ack.default_event());
+		ready.write(1);
+		while(!ack.read()) wait(ack.default_event());
 
-		t3:	wait(10000,SC_PS);
+		wait(10000,SC_PS);
 
-		t4:	ready.write(0);
-			while(ack.read()) wait(ack.default_event());
+		ready.write(0);
+		while(ack.read()) wait(ack.default_event());
 	}
 
 	void	masterRead(const sc_bv<ADDR_WIDTH>& a, sc_bv<DATA_WIDTH>& d)
 	{
-		t1:	A.write(a);
-			wait(5000,SC_PS);
+		A.write(a);
+		wait(5000,SC_PS);
 
-		t2:	ready.write(1);
-			while(!ack.read()) wait(ack.default_event());
+		ready.write(1);
+		while(!ack.read()) wait(ack.default_event());
 
-		t3:	d = D.read();
-			wait(15000,SC_PS);
+		d = D.read();
+		wait(15000,SC_PS);
 
-		t4:	ready.write(0);
-			while(ack.read()) wait(ack.default_event());
+		ready.write(0);
+		while(ack.read()) wait(ack.default_event());
 	}
 };
 
@@ -124,7 +124,7 @@ class	SlaveHardwareBus : public ISlaveHardwareBusProtocol, public sc_channel
 	{
 		t1:	while(!ready.read()) wait(ready.default_event());
 
-		t2:	if(a != A.read()) 
+			if(a != A.read()) 
 			{
 				wait(1000,SC_PS); // avoid hanging from t2 to t1
 				goto t1;
@@ -135,19 +135,19 @@ class	SlaveHardwareBus : public ISlaveHardwareBusProtocol, public sc_channel
 				wait(12000,SC_PS);
 			}
 
-		t3:	ack.write(1);
+			ack.write(1);
 			while(ready.read()) wait(ready.default_event());
 
-		t4:	wait(7000,SC_PS);
+			wait(7000,SC_PS);
 
-		t5:	ack.write(0);
+			ack.write(0);
 	}
 
 	void	slaveRead(const sc_bv<ADDR_WIDTH>& a, sc_bv<DATA_WIDTH>& d)
 	{
 		t1:	while(!ready.read()) wait(ready.default_event());
 
-		t2:	if(a != A.read()) 
+			if(a != A.read()) 
 			{
 				wait(1000,SC_PS);  // avoid hanging from t2 to t1
 				goto t1;
@@ -158,12 +158,12 @@ class	SlaveHardwareBus : public ISlaveHardwareBusProtocol, public sc_channel
 				wait(12000,SC_PS);
 			}
 
-		t3:	ack.write(1);
+			ack.write(1);
 			while(ready.read()) wait(ready.default_event());
 
-		t4:	wait(7000,SC_PS);
+			wait(7000,SC_PS);
 
-		t5:	ack.write(0);
+			ack.write(0);
 	}
 };
 
