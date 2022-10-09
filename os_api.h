@@ -20,7 +20,7 @@ class   os_api : virtual public sc_interface
 
 	virtual int	pre_wait() = 0;
 	virtual void	post_wait(int) = 0;
-	virtual void	time_wait(int) = 0; // time in ms
+	virtual void	time_wait(int, sc_time_unit) = 0;
 	virtual void	task_terminate() = 0;
 	virtual void	reg_task(const char*) = 0;
 };
@@ -31,13 +31,14 @@ class OS: public virtual sc_channel, public os_api
 public:
   OS(const sc_module_name name): sc_channel(name) { }
 
+  void reg_task(const char* name) {  }
+
   int pre_wait() { return 0; }
   void post_wait(int task_id) { }
   
-  void time_wait(int time) { }
+  void time_wait(int time, sc_time_unit unit) { }
   void task_terminate() { }
   
-  void reg_task(const char* name) {  }
 
 };
 
