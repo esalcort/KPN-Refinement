@@ -2,8 +2,8 @@
 A Kahn process architecture along with an operating system API and a bus model for refinement of KPN [1] models in SystemC [2].
 
 # Content
-* **kpn_queue.h**: Queue model for SystemC
 * **HWBus.h**: Pin-accurate and transaction-level bus models in SystemC.
+* **kpn_queue.h**: Queue model for SystemC
 * **os_api.h**: Interface for operating system models in SystemC
 * **kpn-arch/**
     - **- kpn-arch.cpp**: A sample KPN architecture
