@@ -36,7 +36,7 @@ public:
   int pre_wait() { return 0; }
   void post_wait(int task_id) { }
   
-  void time_wait(int time, sc_time_unit unit) { }
+  void time_wait(int time, sc_time_unit unit) {wait(time, unit); }
   void task_terminate() { }
   
 
