@@ -11,11 +11,11 @@ SC_MODULE(PE1)
 {
   sc_port<os_api> os;
   sc_port<queue_api<float>> iq;
-  sc_fifo<float*> qA;
-  sc_fifo_out<float*> qB;
-  sc_fifo_out<float*> qC;
+  kpn_queue<float> qA;
+  sc_port<queue_api<float>> qB;
+  sc_port<queue_api<float>> qC;
 
-  SC_CTOR(PE1) { SC_THREAD(run_A); SC_THREAD(run_B);}
+  SC_CTOR(PE1) : qA("qA", FIXED_ARRAY_LENGTH) { SC_THREAD(run_A); SC_THREAD(run_B)}
 
   void run_A(void) {
 
@@ -38,7 +38,7 @@ SC_MODULE(PE1)
       os->time_wait(1, SC_NS);
     
       t_id = os->pre_wait();
-      qC.write(aPtr);
+      qC->put(aPtr, FIXED_ARRAY_LENGTH);
       os->post_wait(t_id);
       os->time_wait(1, SC_NS);
 
@@ -50,7 +50,7 @@ SC_MODULE(PE1)
       os->time_wait(10, SC_NS);
 
       t_id = os->pre_wait();
-      qA.write(aPtr);
+      qA.put(aPtr, FIXED_ARRAY_LENGTH);
       os->post_wait(t_id);
       os->time_wait(1, SC_NS);
     }
@@ -72,7 +72,7 @@ SC_MODULE(PE1)
       os->time_wait(5, SC_NS);
 
       int t_id = os->pre_wait();
-      qA.read(bPtr);
+      qA.get(bPtr, FIXED_ARRAY_LENGTH);
       os->post_wait(t_id);
       os->time_wait(1, SC_NS);
 
@@ -83,7 +83,7 @@ SC_MODULE(PE1)
       os->time_wait(10, SC_NS);
 
       t_id = os->pre_wait();
-      qB.write(bPtr);
+      qB->put(bPtr, FIXED_ARRAY_LENGTH);
       os->post_wait(t_id);
       os->time_wait(1, SC_NS);
     }
@@ -93,8 +93,8 @@ SC_MODULE(PE1)
 
 SC_MODULE(PE2)
 {
-  sc_fifo_in<float*> qB;
-  sc_fifo_in<float*> qC;
+  sc_port<queue_api<float>> qB;
+  sc_port<queue_api<float>> qC;
 
   SC_CTOR(PE2) { SC_THREAD(run_C); }
 
@@ -106,8 +106,8 @@ SC_MODULE(PE2)
     float *bPtr = bArray;
     
     while(true) {
-      qB.read(aPtr);
-      qC.read(bPtr);
+      qB->get(bPtr, FIXED_ARRAY_LENGTH);
+      qC->get(aPtr, FIXED_ARRAY_LENGTH);
 
       cout << "C1: " << sc_time_stamp() << endl;
       wait(20, SC_NS);
@@ -127,12 +127,15 @@ SC_MODULE(Top) {
 
   // sc_fifo<float*> iq;
   kpn_queue<float> iq;
-  sc_fifo<float*> qB;
-  sc_fifo<float*> qC;
+  kpn_queue<float> qB;
+  kpn_queue<float> qC;
 
   float *inPtr[TOTAL_INPUTS];
 
-  SC_CTOR(Top): os("OS"), pe1("PE1"), pe2("PE2"), iq("iq", FIXED_ARRAY_LENGTH) {
+  SC_CTOR(Top): os("OS"), pe1("PE1"), pe2("PE2"),
+                iq("iq", FIXED_ARRAY_LENGTH),
+                qB("qB", FIXED_ARRAY_LENGTH),
+                qC("qC", FIXED_ARRAY_LENGTH) {
     pe1.os(os);
     pe1.qB(qB);
     pe1.qC(qC);
