@@ -1,10 +1,16 @@
 # KPN-Refinement
-A Kahn process base class along with an operating system API and a pin-accurate bus model for refinement of KPN [1] models in SystemC [2].
+A Kahn process architecture along with an operating system API and a bus model for refinement of KPN [1] models in SystemC [2].
 
 # Content
-* **HWBus.h**: A pin-accurate bus model.
-* **os_api.h**: Interface for operating system models
-* **kahn_process.h**: Base class for implementing refined Kahn processes
+* **kpn_queue.h**: Queue model for SystemC
+* **HWBus.h**: Pin-accurate and transaction-level bus models in SystemC.
+* **os_api.h**: Interface for operating system models in SystemC
+* **kpn-arch/**
+    - **- kpn-arch.cpp**: A sample KPN architecture
+* **perf_estimation/**
+    - **- gemm_nn.c**: An dummy matrix multiply code with variable input sizes M, N, and K
+    - **- sample.csv**: A set of profiling results after running gemm_nn with different inputs
+    - **- estimation_models.ipynb**: A jupyter notebook with examples to train ML models that predict data in sample.csv
 
 
 # References
@@ -13,4 +19,4 @@ A Kahn process base class along with an operating system API and a pin-accurate 
 
 
 # Contact
-If you have a question or suggestion about this repository or a problem running examples, you can contact Kamyar at kammirzazad@utexas.edu.
+If you have a question or suggestion about this repository or a problem running examples, you can contact Susy at esalcort@utexas.edu.
