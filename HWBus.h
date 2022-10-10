@@ -9,6 +9,7 @@
  *	The University of Texas at Austin 
  *
  * 	Author: Kamyar Mirzazad Barijough (kammirzazad@utexas.edu)
+ *  Edited 10/10/22: Erika S. Alcorta added HardwareBusProtocolTLM
  */
 
 #include <systemc.h>
@@ -199,6 +200,70 @@ class	SlaveHardwareSyncGenerate : public IIntrSend, public sc_channel
 	}
 };
 
+class HardwareBusProtocolTLM : public IMasterHardwareBusProtocol, public ISlaveHardwareBusProtocol, public sc_channel
+{
+  sc_inout< sc_bv<ADDR_WIDTH> > bus_addr;
+  sc_inout< sc_bv<DATA_WIDTH> > bus_data;
+  sc_inout<bool> ready;
+  sc_inout<bool> ack;
+
+  HardwareBusProtocolTLM(sc_module_name name) : sc_channel(name) {}
+  
+  void masterWrite(const sc_bv<ADDR_WIDTH>& a, const sc_bv<DATA_WIDTH>& d) 
+  {
+	bus_addr.write(a);
+	bus_data.write(d);
+	wait(5000, SC_PS);
+	ready.write(true);
+	while(ack.read()) wait(ack.default_event());
+	ready.write(false);
+	wait(10000, SC_PS);
+  }
+
+  void masterRead(const sc_bv<ADDR_WIDTH>& a, sc_bv<DATA_WIDTH>& d)
+  {
+	bus_addr.write(a);
+	wait(5000, SC_PS);
+	ready.write(true);
+	while(ack.read()) wait(ack.default_event());
+	ready.write(false);
+	d = bus_data.read();
+	wait(15000,SC_PS);
+  }
+
+  void slaveWrite(const sc_bv<ADDR_WIDTH>& a, sc_bv<DATA_WIDTH>& d)
+  {
+	t1: while(!ready.read()) wait(ready.default_event());
+	if (a != bus_addr.read())  {
+		wait(10000,SC_PS);
+		goto t1;
+	}	
+	else {
+		bus_data.write(d);
+		wait(12000,SC_PS);
+	}
+	ack.write(true);
+	wait(7000,SC_PS);
+	ack.write(false);
+  }
+	
+  void slaveRead(const sc_bv<ADDR_WIDTH>& a, sc_bv<DATA_WIDTH>& d) 
+  {
+	t1: while(!ready.read()) wait(ready.default_event());
+	if (a != bus_addr.read()) {
+		wait(10000,SC_PS);
+		goto t1;
+	}	
+	else {
+		d = bus_data.read();
+		wait(12000,SC_PS);
+	}
+	ack.write(true);
+	wait(7000,SC_PS);
+	ack.write(false);
+  }
+	
+};
 
 /* -----  Media access layer ----- */
 
