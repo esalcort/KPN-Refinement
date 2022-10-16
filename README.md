@@ -7,10 +7,6 @@ A Kahn process architecture along with an operating system API and a bus model f
 * **os_api.h**: Interface for operating system models in SystemC
 * **kpn-arch/**
     - **- kpn-arch.cpp**: A sample KPN architecture
-* **perf_estimation/**
-    - **- gemm_nn.c**: An dummy matrix multiply code with variable input sizes M, N, and K
-    - **- sample.csv**: A set of profiling results after running gemm_nn with different inputs
-    - **- estimation_models.ipynb**: A jupyter notebook with examples to train ML models that predict data in sample.csv
 
 
 # References
