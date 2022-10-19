@@ -21,10 +21,10 @@ SC_MODULE(PE1)
 
     float aArray[FIXED_ARRAY_LENGTH];
     float *aPtr = aArray;
+      
+    os->reg_task("A");
 
     while(true) {
-      
-      os->reg_task("A");
       
       cout << "A1: " << sc_time_stamp() << endl;
       os->time_wait(10, SC_NS);
@@ -61,9 +61,9 @@ SC_MODULE(PE1)
     float bArray[FIXED_ARRAY_LENGTH];
     float *bPtr = bArray;
 
-    while(true) {
+    os->reg_task("B");
 
-      os->reg_task("B");
+    while(true) {
 
       cout << "B1: " << sc_time_stamp() << endl;
       os->time_wait(10, SC_NS);
