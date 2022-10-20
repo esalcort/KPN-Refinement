@@ -24,7 +24,7 @@ public:
 
   void put(T *data, int length) {
     for(int i = 0; i < length; i++) {
-        queue->write(data[i-1]);
+        queue->write(data[i]);
     }
   }
 
