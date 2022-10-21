@@ -202,66 +202,63 @@ class	SlaveHardwareSyncGenerate : public IIntrSend, public sc_channel
 
 class HardwareBusProtocolTLM : public IMasterHardwareBusProtocol, public ISlaveHardwareBusProtocol, public sc_channel
 {
-  sc_inout< sc_bv<ADDR_WIDTH> > bus_addr;
-  sc_inout< sc_bv<DATA_WIDTH> > bus_data;
-  sc_inout<bool> ready;
-  sc_inout<bool> ack;
+  sc_bv<ADDR_WIDTH> bus_addr;
+  sc_bv<DATA_WIDTH> bus_data;
+  sc_bv<ADDR_WIDTH> bus_slave_wait_addr;
 
+  sc_event ready, ack;
+  sc_mutex slave_addr_lock;
+
+public:
   HardwareBusProtocolTLM(sc_module_name name) : sc_channel(name) {}
   
   void masterWrite(const sc_bv<ADDR_WIDTH>& a, const sc_bv<DATA_WIDTH>& d) 
   {
-	bus_addr.write(a);
-	bus_data.write(d);
+	bus_addr = a;
+	bus_data = d;
 	wait(5000, SC_PS);
-	ready.write(true);
-	while(ack.read()) wait(ack.default_event());
-	ready.write(false);
+	ready.notify(SC_ZERO_TIME);
+	wait(ack);
 	wait(10000, SC_PS);
   }
 
   void masterRead(const sc_bv<ADDR_WIDTH>& a, sc_bv<DATA_WIDTH>& d)
   {
-	bus_addr.write(a);
+	bus_addr = a;
 	wait(5000, SC_PS);
-	ready.write(true);
-	while(ack.read()) wait(ack.default_event());
-	ready.write(false);
-	d = bus_data.read();
+	ready.notify(SC_ZERO_TIME);
+	wait(ack);
+	d = bus_data;
 	wait(15000,SC_PS);
   }
 
-  void slaveWrite(const sc_bv<ADDR_WIDTH>& a, sc_bv<DATA_WIDTH>& d)
+  void slaveWrite(const sc_bv<ADDR_WIDTH>& a, const sc_bv<DATA_WIDTH>& d)
   {
-	t1: while(!ready.read()) wait(ready.default_event());
-	if (a != bus_addr.read())  {
-		wait(10000,SC_PS);
+	t1: wait(ready);
+	if (a != bus_addr)  {
 		goto t1;
 	}	
 	else {
-		bus_data.write(d);
+		bus_data = d;
 		wait(12000,SC_PS);
 	}
-	ack.write(true);
 	wait(7000,SC_PS);
-	ack.write(false);
+	ack.notify(SC_ZERO_TIME);
   }
 	
   void slaveRead(const sc_bv<ADDR_WIDTH>& a, sc_bv<DATA_WIDTH>& d) 
   {
-	t1: while(!ready.read()) wait(ready.default_event());
-	if (a != bus_addr.read()) {
-		wait(10000,SC_PS);
+	t1: wait(ready);
+	if (a != bus_addr) {
 		goto t1;
 	}	
 	else {
-		d = bus_data.read();
+		d = bus_data;
 		wait(12000,SC_PS);
 	}
-	ack.write(true);
 	wait(7000,SC_PS);
-	ack.write(false);
-  }
+	ack.notify(SC_ZERO_TIME);
+	}
 	
 };
 

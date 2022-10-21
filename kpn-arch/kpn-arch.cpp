@@ -106,8 +106,8 @@ SC_MODULE(PE2)
     float *bPtr = bArray;
     
     while(true) {
-      qB->get(bPtr, FIXED_ARRAY_LENGTH);
       qC->get(aPtr, FIXED_ARRAY_LENGTH);
+      qB->get(bPtr, FIXED_ARRAY_LENGTH);
 
       cout << "C1: " << sc_time_stamp() << endl;
       wait(20, SC_NS);
