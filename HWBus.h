@@ -207,7 +207,6 @@ class HardwareBusProtocolTLM : public IMasterHardwareBusProtocol, public ISlaveH
   sc_bv<ADDR_WIDTH> bus_slave_wait_addr;
 
   sc_event ready, ack;
-  sc_mutex slave_addr_lock;
 
 public:
   HardwareBusProtocolTLM(sc_module_name name) : sc_channel(name) {}
