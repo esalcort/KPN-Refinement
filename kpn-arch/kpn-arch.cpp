@@ -10,10 +10,10 @@
 SC_MODULE(PE1)
 {
   sc_port<os_api> os;
-  sc_port<queue_api<float>> iq;
+  sc_port<queue_api<float> > iq;
   kpn_queue<float> qA;
-  sc_port<queue_api<float>> qB;
-  sc_port<queue_api<float>> qC;
+  sc_port<queue_api<float> > qB;
+  sc_port<queue_api<float> > qC;
 
   SC_CTOR(PE1) : qA("qA", FIXED_ARRAY_LENGTH) { SC_THREAD(run_A); SC_THREAD(run_B)}
 
@@ -93,8 +93,8 @@ SC_MODULE(PE1)
 
 SC_MODULE(PE2)
 {
-  sc_port<queue_api<float>> qB;
-  sc_port<queue_api<float>> qC;
+  sc_port<queue_api<float> > qB;
+  sc_port<queue_api<float> > qC;
 
   SC_CTOR(PE2) { SC_THREAD(run_C); }
 
