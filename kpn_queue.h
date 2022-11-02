@@ -2,6 +2,7 @@
 #define	KPN_QUEUE
 
 #include <systemc.h>
+#include "HWBus.h"
 
 template<typename T>
 class   queue_api : virtual public sc_interface
@@ -36,5 +37,107 @@ public:
   
 
 };
+
+class MultiMasterMACTLM : public IMasterHardwareBusLinkAccess, public sc_channel
+{
+  public:
+    sc_port<IMasterTLMBusProtocol> protocol;
+    sc_mutex busy;
+  MultiMasterMACTLM(sc_module_name name) : sc_channel(name) {}
+	void	MasterRead(int addr, void *data, unsigned long len) {  }
+	void	MasterWrite(int addr, const void* data, unsigned long len) {
+    // cout << "\t\t" << sc_time_stamp() << " Master MAC Ping to" << addr << endl;
+    sc_bv<DATA_WIDTH> ping;
+    while(true) {
+      busy.lock();
+      protocol->masterPingSlave(addr, ping);
+      if (ping ==0) {
+        busy.unlock();
+        wait(100, SC_NS);
+        // cout << "\t\t" << sc_time_stamp() << " Master MAC Unsuccesful Ping to" << addr << endl;
+      }
+      else {
+        break;
+        // cout << "\t\t" << sc_time_stamp() << " Master MAC Succesful Ping to" << addr << endl;
+      }
+    }
+    unsigned long i;
+		unsigned char *p;
+		sc_uint<DATA_WIDTH> word = 0;
+   
+		for(p = (unsigned char*)data, i = 0; i < len; i++, p++)
+		{
+			word = (word<<8) + *p;
+      
+			if(!((i+1)%DATA_BYTES)) 
+			{
+        // cout << "\t\t" << sc_time_stamp() << " Master MAC Write to" << addr << endl;
+				protocol->masterWrite(addr, word);
+				word = 0;
+      }
+		}
+    
+		if(i%DATA_BYTES)
+		{
+			word <<= 8 * (DATA_BYTES - (i%DATA_BYTES));
+      // cout << "\t\t" << sc_time_stamp() << " Master MAC Write to" << addr << endl;
+			protocol->masterWrite(addr, word);
+		}
+    busy.unlock();
+  }
+};
+
+template<typename T>
+class MasterDriverWrite: public kpn_queue<T>
+{
+public:
+  sc_port<IMasterHardwareBusLinkAccess> MAC;
+  int address;
+
+  MasterDriverWrite(sc_module_name name, int addr): kpn_queue<T>(name, 1)
+  {
+    address = addr;
+  }
+
+  void put(T *data, int length) override
+  {
+    // cout << "\t" << sc_time_stamp() << " Master Driver Write to" << address << endl;
+    MAC->MasterWrite(address, data, length);
+  }
+
+  void get(T* &data, int length) override
+  {
+    cerr << "Trying to read on write-only driver" << endl;
+    sc_abort();
+  }
+  
+
+};
+
+template<typename T>
+class SlaveDriverRead: public virtual sc_channel, public queue_api<T>
+{
+public:
+  sc_port<ISlaveHardwareBusLinkAccess> MAC;
+  int address;
+
+  SlaveDriverRead(sc_module_name name, int addr): address(addr) {}
+
+  void put(T *data, int length) //override
+  {
+    cerr << "Trying to write on a read-only driver" << endl;
+    sc_abort();
+  }
+
+  void get(T* &data, int length) //override
+  {
+    // cout << "\t" << sc_time_stamp() << " Slave Driver Read to" << address << endl;
+    MAC->SlaveRead(address, data, length);
+  }
+  
+  
+
+};
+
 
 #endif

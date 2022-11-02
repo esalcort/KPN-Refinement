@@ -55,6 +55,12 @@ class	IMasterHardwareBusProtocol : virtual public sc_interface
 	virtual void	masterWrite(const sc_bv<ADDR_WIDTH>& a, const sc_bv<DATA_WIDTH>& d) = 0;
 };
 
+class IMasterTLMBusProtocol : virtual public IMasterHardwareBusProtocol
+{
+	public:
+	virtual void	masterPingSlave(const sc_bv<ADDR_WIDTH>& a, sc_bv<DATA_WIDTH>& d) = 0;
+};
+
 class	ISlaveHardwareBusProtocol : virtual public sc_interface
 {
 	public:
@@ -200,13 +206,14 @@ class	SlaveHardwareSyncGenerate : public IIntrSend, public sc_channel
 	}
 };
 
-class HardwareBusProtocolTLM : public IMasterHardwareBusProtocol, public ISlaveHardwareBusProtocol, public sc_channel
+class HardwareBusProtocolTLM : public IMasterTLMBusProtocol, public ISlaveHardwareBusProtocol, public sc_channel
 {
   sc_bv<ADDR_WIDTH> bus_addr;
   sc_bv<DATA_WIDTH> bus_data;
   sc_bv<ADDR_WIDTH> bus_slave_wait_addr;
 
   sc_event ready, ack;
+  sc_mutex slave_addr_lock;
 
 public:
   HardwareBusProtocolTLM(sc_module_name name) : sc_channel(name) {}
@@ -216,8 +223,10 @@ public:
 	bus_addr = a;
 	bus_data = d;
 	wait(5000, SC_PS);
+	// cout << "\t\t\t" << sc_time_stamp() << " Master Bus Send Notify" << endl;
 	ready.notify(SC_ZERO_TIME);
 	wait(ack);
+	// cout << "\t\t\t" << sc_time_stamp() << " Master Bus Ack Received" << endl;
 	wait(10000, SC_PS);
   }
 
@@ -231,6 +240,18 @@ public:
 	wait(15000,SC_PS);
   }
 
+  void masterPingSlave(const sc_bv<ADDR_WIDTH>& a, sc_bv<DATA_WIDTH>& d) {
+	if (a == bus_slave_wait_addr) {
+		d = 1;
+		// cout << "\t\t\t" << sc_time_stamp() << " Slave Ping Received, correct address " << bus_slave_wait_addr << endl;
+	}
+	else {
+		// cout << "\t\t\t" << sc_time_stamp() << " Slave Ping Received, incorrect address " << bus_slave_wait_addr << endl;
+		d = 0;
+	}
+
+  }
+	   
   void slaveWrite(const sc_bv<ADDR_WIDTH>& a, const sc_bv<DATA_WIDTH>& d)
   {
 	t1: wait(ready);
@@ -247,8 +268,14 @@ public:
 	
   void slaveRead(const sc_bv<ADDR_WIDTH>& a, sc_bv<DATA_WIDTH>& d) 
   {
+	slave_addr_lock.lock();
+	// cout << "\t\t\t" << sc_time_stamp() << " Slave Bus Update Address" << a << endl;
+	bus_slave_wait_addr = a;
+	
 	t1: wait(ready);
+	// cout << "\t\t\t" << sc_time_stamp() << " Slave Bus Ready Received" << a << endl;
 	if (a != bus_addr) {
+		// cout << "\t\t\t" << sc_time_stamp() << " Slave Bus Not the expected address" << a << endl;
 		goto t1;
 	}	
 	else {
@@ -257,7 +284,13 @@ public:
 	}
 	wait(7000,SC_PS);
 	ack.notify(SC_ZERO_TIME);
-	}
+		// cout << "\t\t\t" << sc_time_stamp() << " Slave Bus Send Notify" << a << endl;
+	
+	bus_slave_wait_addr = -1;
+	slave_addr_lock.unlock();
+
+	// cout << "\t\t\t" << sc_time_stamp() << " Slave Bus wait address released " << bus_slave_wait_addr << endl;
+  }
 	
 };
 
@@ -374,6 +407,7 @@ class	SlaveHardwareBusLinkAccess : public ISlaveHardwareBusLinkAccess, public sc
 		{
 			if(!(i%DATA_BYTES))
 			{
+				// cout << "\t\t" << sc_time_stamp() << " Slave MAC Read to" << addr << endl;
 				protocol->slaveRead(addr, word);
 			}
 

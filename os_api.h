@@ -47,8 +47,8 @@ public:
     if (!rdyq.empty()){
       current_task = rdyq.front();
       rdyq.pop();
-      cout << "\t Dispatching " << current_task->name << endl;
-      cout << "\t\tnotify " << current_task->name << endl;
+      // cout << "\t Dispatching " << current_task->name << endl;
+      // cout << "\t\tnotify " << current_task->name << endl;
       current_task->e.notify(SC_ZERO_TIME);
     }
     else {
@@ -59,10 +59,10 @@ public:
   void yield() {
     Task *t = current_task;
     rdyq.push(t);
-    cout << "\t yield::pushing " << t->name << endl;
+    // cout << "\t yield::pushing " << t->name << endl;
     dispatch();
     // if (current_task != t){
-      cout << "\t\twait " << t->name << endl;
+      // cout << "\t\twait " << t->name << endl;
       wait(t->e);
     // }
   }
@@ -75,37 +75,37 @@ public:
     task_count++;
     if (current_task == NULL) {
       current_task = t;
-      cout << "\t reg_task::current_task=" << current_task->name << endl;
+      // cout << "\t reg_task::current_task=" << current_task->name << endl;
     }
     else {
       rdyq.push(t);
-      cout << "\t\twait " << t->name << endl;
+      // cout << "\t\twait " << t->name << endl;
       wait(t->e);
     }
    }
 
   int pre_wait() { 
     Task *t = current_task;
-    cout << "\t pre_wait" << t->name << endl;
+    // cout << "\t pre_wait" << t->name << endl;
     dispatch();
     return t->id;
   }
   void post_wait(int task_id) {
     Task *t = alivetasks[task_id];
     rdyq.push(t);
-    cout << "\t post_wait::push" << t->name << endl;
+    // cout << "\t post_wait::push" << t->name << endl;
     if (current_task == NULL) {
       dispatch();
     }
     // if (current_task != t) {
-      cout << "\t\twait " << t->name << endl;
+      // cout << "\t\twait " << t->name << endl;
       wait(t->e);
     // }
   }
   
   void time_wait(int time, sc_time_unit unit) {
     wait(time, unit);
-    cout << "\t time_wait::yield" << endl;
+    // cout << "\t time_wait::yield" << endl;
     yield();
   }
   void task_terminate() {
