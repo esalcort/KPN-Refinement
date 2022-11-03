@@ -53,13 +53,9 @@ class	IMasterHardwareBusProtocol : virtual public sc_interface
 
 	virtual void	masterRead (const sc_bv<ADDR_WIDTH>& a, sc_bv<DATA_WIDTH>& d) = 0;
 	virtual void	masterWrite(const sc_bv<ADDR_WIDTH>& a, const sc_bv<DATA_WIDTH>& d) = 0;
+	virtual int 	masterPingSlave(const sc_bv<ADDR_WIDTH>& a, const sc_bv<DATA_WIDTH>& d) = 0;
 };
 
-class IMasterTLMBusProtocol : virtual public IMasterHardwareBusProtocol
-{
-	public:
-	virtual void	masterPingSlave(const sc_bv<ADDR_WIDTH>& a, sc_bv<DATA_WIDTH>& d) = 0;
-};
 
 class	ISlaveHardwareBusProtocol : virtual public sc_interface
 {
@@ -81,6 +77,28 @@ class	MasterHardwareBus : public IMasterHardwareBusProtocol, public sc_channel
 	sc_inout< sc_bv<DATA_WIDTH> > D;
 
 	MasterHardwareBus(sc_module_name name) : sc_channel(name) {}
+	int masterPingSlave(const sc_bv<ADDR_WIDTH>& a, const sc_bv<DATA_WIDTH>& d) {
+		int success;
+		A.write(a);
+		D.write(d);
+		wait(5000, SC_PS);
+
+		ready.write(1);
+		wait(sc_time(15000, SC_PS), ack.default_event());
+		if (!ack.read()) {
+			// Ping timeout
+			success = -1;
+		}
+		else {
+			// Ping successful
+			success = 1;
+			wait(10000,SC_PS);
+		}
+		ready.write(0);
+		while(ack.read()) wait(ack.default_event());
+		
+		return success;
+	}
 
 	void	masterWrite(const sc_bv<ADDR_WIDTH>& a, const sc_bv<DATA_WIDTH>& d)
 	{
@@ -206,7 +224,7 @@ class	SlaveHardwareSyncGenerate : public IIntrSend, public sc_channel
 	}
 };
 
-class HardwareBusProtocolTLM : public IMasterTLMBusProtocol, public ISlaveHardwareBusProtocol, public sc_channel
+class HardwareBusProtocolTLM : public IMasterHardwareBusProtocol, public ISlaveHardwareBusProtocol, public sc_channel
 {
   sc_bv<ADDR_WIDTH> bus_addr;
   sc_bv<DATA_WIDTH> bus_data;
@@ -240,14 +258,15 @@ public:
 	wait(15000,SC_PS);
   }
 
-  void masterPingSlave(const sc_bv<ADDR_WIDTH>& a, sc_bv<DATA_WIDTH>& d) {
+  int masterPingSlave(const sc_bv<ADDR_WIDTH>& a, const sc_bv<DATA_WIDTH>& d) {
 	if (a == bus_slave_wait_addr) {
-		d = 1;
+		masterWrite(a, d);
+		return 1;
 		// cout << "\t\t\t" << sc_time_stamp() << " Slave Ping Received, correct address " << bus_slave_wait_addr << endl;
 	}
 	else {
 		// cout << "\t\t\t" << sc_time_stamp() << " Slave Ping Received, incorrect address " << bus_slave_wait_addr << endl;
-		d = 0;
+		return -1;
 	}
 
   }

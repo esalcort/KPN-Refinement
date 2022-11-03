@@ -41,26 +41,14 @@ public:
 class MultiMasterMACTLM : public IMasterHardwareBusLinkAccess, public sc_channel
 {
   public:
-    sc_port<IMasterTLMBusProtocol> protocol;
+    sc_port<IMasterHardwareBusProtocol> protocol;
     sc_mutex busy;
   MultiMasterMACTLM(sc_module_name name) : sc_channel(name) {}
 	void	MasterRead(int addr, void *data, unsigned long len) {  }
+
 	void	MasterWrite(int addr, const void* data, unsigned long len) {
     // cout << "\t\t" << sc_time_stamp() << " Master MAC Ping to" << addr << endl;
-    sc_bv<DATA_WIDTH> ping;
-    while(true) {
-      busy.lock();
-      protocol->masterPingSlave(addr, ping);
-      if (ping ==0) {
-        busy.unlock();
-        wait(100, SC_NS);
-        // cout << "\t\t" << sc_time_stamp() << " Master MAC Unsuccesful Ping to" << addr << endl;
-      }
-      else {
-        break;
-        // cout << "\t\t" << sc_time_stamp() << " Master MAC Succesful Ping to" << addr << endl;
-      }
-    }
+    int ping=0;
     unsigned long i;
 		unsigned char *p;
 		sc_uint<DATA_WIDTH> word = 0;
@@ -72,7 +60,19 @@ class MultiMasterMACTLM : public IMasterHardwareBusLinkAccess, public sc_channel
 			if(!((i+1)%DATA_BYTES)) 
 			{
         // cout << "\t\t" << sc_time_stamp() << " Master MAC Write to" << addr << endl;
-				protocol->masterWrite(addr, word);
+        if (ping == 0){
+          do {
+            busy.lock();
+            ping = protocol->masterPingSlave(addr, word);
+            if (ping == -1) {
+              busy.unlock();
+              wait(100, SC_NS);
+            }
+          } while(ping == -1);
+        }
+        else {
+				  protocol->masterWrite(addr, word);
+        }
 				word = 0;
       }
 		}
