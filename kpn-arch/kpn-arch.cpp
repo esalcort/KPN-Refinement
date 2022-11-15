@@ -130,7 +130,7 @@ SC_MODULE(Top) {
   kpn_queue<float> qB;
   kpn_queue<float> qC;
 
-  float *inPtr[TOTAL_INPUTS];
+  float *inPtr[TOTAL_INPUTS] = {NULL};
 
   SC_CTOR(Top): os("OS"), pe1("PE1"), pe2("PE2"),
                 iq("iq", FIXED_ARRAY_LENGTH),
@@ -147,7 +147,8 @@ SC_MODULE(Top) {
 
   ~Top() {
     for (int i = 0; i < TOTAL_INPUTS; i++) {
-      delete inPtr[i];
+      if (inPtr[i])
+        delete inPtr[i];
     }
   }
 
